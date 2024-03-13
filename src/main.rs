@@ -8,9 +8,10 @@ use std::fs::File;
 use std::io::Read;
 use std::env;
 
+const TICK_PER_FRAME_REDRAW: u8 = 10;
+
 struct Chip8 {
     mem: memory::MemoryComponents,
-    timer: processor::Timer,
 }
 
 fn main() { 
@@ -29,7 +30,6 @@ fn main() {
 
     let mut chip8_instance = Chip8 {
         mem: memory::MemoryComponents::new(),
-        timer: processor::Timer::new(),
     };
 
     chip8_instance.mem.load_font();
@@ -58,11 +58,34 @@ fn main() {
     'emulatorloop: loop {
         for evt in event_pump.poll_iter() {
             match evt {
-                Event::Quit{..} => {break 'emulatorloop},
+                Event::Quit{..} => {
+                    break 'emulatorloop
+                },
+
+                // detect key press and key release
+                Event::KeyDown{keycode: Some(key), ..} => {
+                    if let Some(k) = graphics::keyboardkey_to_number(key) {
+                        chip8_instance.mem.keypress(k, true);
+                    }
+                },
+
+                Event::KeyUp{keycode: Some(key), ..} => {
+                    if let Some(k) = graphics::keyboardkey_to_number(key) {
+                        chip8_instance.mem.keypress(k, false);
+                    }
+                },
+
                 _ => (),
             }
         }
-        processor::cicle(&mut chip8_instance.mem);
+
+        // allows the emulator execute 10 operations before redrawing the frame
+        // it'll make it run better
+        for _ in 0..TICK_PER_FRAME_REDRAW {
+            processor::cicle(&mut chip8_instance.mem);
+        }
+
+        chip8_instance.mem.tick_timers();
         graphics::draw_on_gui_screen(&chip8_instance.mem, &mut canvas)
     }
 }
