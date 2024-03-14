@@ -4,15 +4,9 @@ mod memory;
 mod font;
 
 use sdl2::event::Event;
-use std::fs::File;
-use std::io::Read;
 use std::env;
 
 const TICK_PER_FRAME_REDRAW: u8 = 10;
-
-struct Chip8 {
-    mem: memory::MemoryComponents,
-}
 
 fn main() { 
 
@@ -22,18 +16,10 @@ fn main() {
         println!("Usage: {} run /path/to/rom", args[0]);
         return;
     }
-    let mut rom = File::open(&args[1])
-        .expect("[err] unable to open file");
 
-    let mut buffer = Vec::new(); 
-    rom.read_to_end(&mut buffer).unwrap();
+    let mut chip8_instance = memory::Chip8::new();
 
-    let mut chip8_instance = Chip8 {
-        mem: memory::MemoryComponents::new(),
-    };
-
-    chip8_instance.mem.load_font();
-    chip8_instance.mem.load_rom(&buffer); // rom content inside buffer will be moved to chip8's ram
+    chip8_instance.load_rom(&args[1]);
 
     let sdl_context = sdl2::init().unwrap();
     let video_subsystem = sdl_context.video().unwrap();
@@ -64,14 +50,14 @@ fn main() {
 
                 // detect key press and key release
                 Event::KeyDown{keycode: Some(key), ..} => {
-                    if let Some(k) = graphics::keyboardkey_to_number(key) {
-                        chip8_instance.mem.keypress(k, true);
+                    if let Some(k) = chip8_instance.keyboardkey_to_number(key) {
+                        chip8_instance.keypress(k, true);
                     }
                 },
 
                 Event::KeyUp{keycode: Some(key), ..} => {
-                    if let Some(k) = graphics::keyboardkey_to_number(key) {
-                        chip8_instance.mem.keypress(k, false);
+                    if let Some(k) = chip8_instance.keyboardkey_to_number(key) {
+                        chip8_instance.keypress(k, false);
                     }
                 },
 
@@ -82,10 +68,10 @@ fn main() {
         // allows the emulator execute 10 operations before redrawing the frame
         // it'll make it run better
         for _ in 0..TICK_PER_FRAME_REDRAW {
-            processor::cicle(&mut chip8_instance.mem);
+            chip8_instance.cicle();
         }
 
-        chip8_instance.mem.tick_timers();
-        graphics::draw_on_gui_screen(&chip8_instance.mem, &mut canvas)
+        chip8_instance.tick_timers();
+        chip8_instance.draw_on_gui_screen(&mut canvas)
     }
 }

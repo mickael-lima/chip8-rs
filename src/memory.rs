@@ -1,5 +1,8 @@
 use crate::font;
 
+use std::fs::File;
+use std::io::Read;
+
 const STACK_SIZE: usize = 16;
 const RAM_SIZE: usize = 4096;
 const REG_SIZE: usize = 16;
@@ -8,7 +11,7 @@ pub const KEYBOARD_SIZE: usize = 16;
 pub const SCREEN_HEIGHT: usize = 32;
 pub const SCREEN_WIDTH: usize = 64;
 
-pub struct MemoryComponents {
+pub struct Chip8 {
     pub display: [[bool; SCREEN_HEIGHT]; SCREEN_WIDTH],
     pub memory: [u8; RAM_SIZE],
     pub keyboard: [bool; KEYBOARD_SIZE],
@@ -21,43 +24,10 @@ pub struct MemoryComponents {
     pub sound_timer: u8,
 }
 
-impl MemoryComponents {
-
-    pub fn load_font(&mut self) -> [u8; RAM_SIZE]{
-        for i in 0..font::FONT_SET.len() {
-            self.memory[i] = font::FONT_SET[i];
-        }
-
-        self.memory
-    }
-
-    pub fn stack_push(&mut self, value: u16) {
-        const OVERFLOW_INDEX: usize = STACK_SIZE + 1;
-
-        match self.stack_pointer {
-            OVERFLOW_INDEX => self.stack_pointer = 0,
-            _ => {
-                self.stack[self.stack_pointer] = value;
-                self.stack_pointer += 1;
-            },
-        }
-    }
-
-    pub fn stack_pop(&mut self) -> u16 {
-
-        if self.stack_pointer == 0 {
-            println!("[wrn] stack_pop() tried to pop at index 0");
-            println!("[wrn] stack_pointer will reset to 0");
-
-            self.stack_pointer = 1;
-        }
-
-        self.stack_pointer -= 1;
-        self.stack[self.stack_pointer as usize]
-    }
-
+// general functions
+impl Chip8 {
     pub fn new() -> Self {
-        MemoryComponents {
+        Chip8 {
             display: [[false; SCREEN_HEIGHT]; SCREEN_WIDTH],
             memory: [0; RAM_SIZE],
             keyboard: [false; KEYBOARD_SIZE],
@@ -81,16 +51,63 @@ impl MemoryComponents {
 
             self.sound_timer -= 1;
         }
-
-
     }
 
     pub fn keypress(&mut self, keycode: usize, status: bool) {
         self.keyboard[keycode] = status; 
     }
+}
 
-    pub fn load_rom(&mut self, data: &[u8]) {
-        let last_addr = 0x200 + data.len() as usize;
-        self.memory[0x200..last_addr].copy_from_slice(data);
+// file and memory related management
+impl Chip8 {
+
+    pub fn load_font(&mut self) -> [u8; RAM_SIZE]{
+        for i in 0..font::FONT_SET.len() {
+            self.memory[i] = font::FONT_SET[i];
+        }
+
+        self.memory
+    }
+
+    pub fn load_rom(&mut self, filename: &String) {
+        
+        let mut rom_file = File::open(filename)
+            .expect("[err] error");
+
+        self.load_font();
+
+        let mut rom_raw_data = Vec::new();
+        rom_file.read_to_end(&mut rom_raw_data).unwrap();
+
+        let last_addr = 0x200 + rom_raw_data.len() as usize;
+        self.memory[0x200..last_addr].copy_from_slice(&rom_raw_data);
+    }
+}
+
+// stack management
+impl Chip8 {
+    pub fn stack_push(&mut self, value: u16) {
+        const OVERFLOW_INDEX: usize = STACK_SIZE + 1;
+
+        match self.stack_pointer {
+            OVERFLOW_INDEX => self.stack_pointer = 0,
+            _ => {
+                self.stack[self.stack_pointer] = value;
+                self.stack_pointer += 1;
+            },
+        }
+    }
+
+    pub fn stack_pop(&mut self) -> u16 {
+
+        if self.stack_pointer == 0 {
+            println!("[wrn] stack_pop() tried to pop at index 0");
+            println!("[wrn] stack_pointer will reset to 0");
+
+            self.stack_pointer = 1;
+        }
+
+        self.stack_pointer -= 1;
+        self.stack[self.stack_pointer as usize]
     }
 }

@@ -1,7 +1,3 @@
-// Como esse espaço é deixado em branco pela maioria dos interpretadores modernos
-// então ele pode ser usado para alocar a fonte utilizada nas ROMs. A fonte é re- 
-// digida utilizando-se das mesmas técnicas de escrever algo no display de um Ar-
-// duino (matriz de 0/1), mas compactada em hexadecimal.
 pub const FONT_SET: [u8; 80] = [
     0xF0,
     0x90,
