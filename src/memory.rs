@@ -58,7 +58,7 @@ impl Chip8 {
     }
 }
 
-// file and memory related management
+// file & memory management
 impl Chip8 {
 
     pub fn load_font(&mut self) -> [u8; RAM_SIZE]{
@@ -70,14 +70,17 @@ impl Chip8 {
     }
 
     pub fn load_rom(&mut self, filename: &String) {
-        
-        let mut rom_file = File::open(filename)
-            .expect("[err] error");
+        const MAX_SIZE_FOR_ROM_DATA: u16 = (RAM_SIZE - 0x200) as u16;
 
+        let mut rom_file = File::open(filename).unwrap();
         self.load_font();
 
         let mut rom_raw_data = Vec::new();
         rom_file.read_to_end(&mut rom_raw_data).unwrap();
+
+        if rom_raw_data.len() as u16 > MAX_SIZE_FOR_ROM_DATA {
+            panic!("File {} is too big for be loaded into the emulator, exiting...", filename);
+        }
 
         let last_addr = 0x200 + rom_raw_data.len() as usize;
         self.memory[0x200..last_addr].copy_from_slice(&rom_raw_data);
@@ -86,27 +89,15 @@ impl Chip8 {
 
 // stack management
 impl Chip8 {
-    pub fn stack_push(&mut self, value: u16) {
-        const OVERFLOW_INDEX: usize = STACK_SIZE + 1;
 
-        match self.stack_pointer {
-            OVERFLOW_INDEX => self.stack_pointer = 0,
-            _ => {
-                self.stack[self.stack_pointer] = value;
-                self.stack_pointer += 1;
-            },
-        }
+    // note: there's no need to check for overflow and underflow
+    // condition because it is handled in opcode's section
+    pub fn stack_push(&mut self, value: u16) {
+        self.stack[self.stack_pointer] = value;
+        self.stack_pointer += 1;
     }
 
     pub fn stack_pop(&mut self) -> u16 {
-
-        if self.stack_pointer == 0 {
-            println!("[wrn] stack_pop() tried to pop at index 0");
-            println!("[wrn] stack_pointer will reset to 0");
-
-            self.stack_pointer = 1;
-        }
-
         self.stack_pointer -= 1;
         self.stack[self.stack_pointer as usize]
     }
