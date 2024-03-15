@@ -13,14 +13,16 @@ wget https://github.com/mickael-lima/chip8-rs/releases/download/release/chip8-rs
 ```bash
 chmod +x chip8-rs
 ```
-3. Execute-o com `./chip8-rs` seguindo [as instruções de como usá-lo](#Instruções de Uso)
+3. Execute-o com `./chip8-rs` seguindo [as instruções de como usá-lo](#instruções-de-uso)
 
 ### Instruções de Compilação
 
 Para compilar esse interpretador localmente, é necessário ter os pacotes `rust` e `cargo` instalados e operacionais em sua distribuição GNU/Linux. Atendido essas exigências:
 
 1. Clone o repositório utilizando `git`
-> git clone https://github.com/mickael-lima/chip8-rs
+```bash
+git clone https://github.com/mickael-lima/chip8-rs
+```
 
 2. Dentro do diretório `chip8-rs`, use o `cargo` para gerar um binário. 
 
@@ -39,7 +41,7 @@ Para carregar uma ROM no interpretador, é necessário apenas apontar a localiza
 
 #### ROMs 
 
-Você pode achar ROMs de CHIP-8 (majoritariamente de jogos e demos) [nesse repositório](https://github.com/kripod/chip8-roms). Caso queira modificar a implementação de algum op-code, recomendo utilizar [essas ROMs de teste][https://github.com/corax89/chip8-test-rom] para garantir que tudo está ocorrendo bem.
+Você pode achar ROMs de CHIP-8 (majoritariamente de jogos e demos) [nesse repositório](https://github.com/kripod/chip8-roms). Caso queira modificar a implementação de algum op-code, recomendo utilizar [essas ROMs de teste](https://github.com/corax89/chip8-test-rom) para garantir que tudo está ocorrendo bem.
 
 #### Controle
 
